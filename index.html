@@ -26,6 +26,7 @@
     display: flex; align-items: center; justify-content: center;
     background: rgba(255,255,255,0.1);
     box-shadow: 0 0 15px gold inset;
+    transition: transform 0.2s ease;
   }
   button {
     background: gold;
@@ -77,44 +78,57 @@ async function loadResults() {
     const res = await fetch("results.json?cache=" + Date.now());
     const data = await res.json();
     const table = document.getElementById("results");
-    data.reverse().forEach(row => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
-      table.appendChild(tr);
-    });
+    data.reverse().forEach(row => addToTable(row));
   } catch(e) { console.error(e); }
 }
 
 async function spin() {
   tries++;
   const r = [r1, r2, r3];
-  r.forEach(reel => reel.textContent = symbols[Math.floor(Math.random()*symbols.length)]);
   document.getElementById("message").textContent = "Крутим...";
-  
-  await new Promise(res => setTimeout(res, 800));
-  
+
+  // Рандомное количество прокруток для каждого барабана
+  const spins = [
+    5 + Math.floor(Math.random() * 10),  // r1: 5-14
+    8 + Math.floor(Math.random() * 12),  // r2: 8-19
+    10 + Math.floor(Math.random() * 15)  // r3: 10-24
+  ];
+
+  let count = 0;
+  const interval = setInterval(() => {
+    r.forEach((reel, i) => {
+      if(count < spins[i]) {
+        reel.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+        reel.style.transform = `rotate(${Math.random()*10-5}deg)`;
+      }
+    });
+    count++;
+    if(count > Math.max(...spins)) clearInterval(interval);
+  }, 50);
+
+  await new Promise(res => setTimeout(res, Math.max(...spins)*50 + 50));
+
   const a = r1.textContent, b = r2.textContent, c = r3.textContent;
-  if (a === b && b === c) {
+  if(a === b && b === c) {
     const name = prompt("🎉 Победа! Введите ваше имя:");
     document.getElementById("message").textContent = `Поздравляем, ${name}! 🍀`;
-    sendResult(name, tries);
+    const row = { name, tries, date: new Date().toLocaleString() };
+    addToTable(row);
+    sendResult(row);
     tries = 0;
   } else {
     document.getElementById("message").textContent = "Попробуй ещё!";
   }
 }
 
-async function sendResult(name, tries) {
-  const result = { name, tries, date: new Date().toLocaleString() };
-  
-  // Отправляем только данные, токен Action использует сам
-  await fetch("/.netlify/functions/sendResult", { // пример, если используешь serverless
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(result)
-  }).catch(e => console.log("Отправка через repository_dispatch", e));
+function addToTable(row) {
+  const table = document.getElementById("results");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
+  table.insertBefore(tr, table.children[1]); // вставляем сверху
+}
 
-  // Если хочешь напрямую через GitHub API:
+async function sendResult(result) {
   await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
     method: "POST",
     headers: {
@@ -126,8 +140,6 @@ async function sendResult(name, tries) {
       client_payload: result
     })
   });
-
-  alert("Результат отправлен!");
 }
 
 loadResults();
