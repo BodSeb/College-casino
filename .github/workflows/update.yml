@@ -21,7 +21,6 @@ jobs:
           data.push(payload);
           fs.writeFileSync(path, JSON.stringify(data, null, 2));
           "
-
         env:
           PAYLOAD: ${{ toJson(github.event.client_payload) }}
 
@@ -30,41 +29,5 @@ jobs:
           git config user.name 'GitHub Actions'
           git config user.email 'actions@github.com'
           git add results.json
-          git commit -m 'Update results.json'
-          git push
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}name: Update results
-on:
-  repository_dispatch:
-    types: [update_results]
-
-jobs:
-  update:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
-
-      - name: Update results.json
-        run: |
-          echo "Updating results..."
-          node -e "
-          const fs = require('fs');
-          const path = 'results.json';
-          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const payload = JSON.parse(process.env.PAYLOAD);
-          data.push(payload);
-          fs.writeFileSync(path, JSON.stringify(data, null, 2));
-          "
-        env:
-          PAYLOAD: ${{ toJson(github.event.client_payload) }}
-
-      - name: Commit and push changes
-        run: |
-          git config user.name 'GitHub Actions'
-          git config user.email 'actions@github.com'
-          git add results.json
-          git commit -m 'Update results.json'
-          git push
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN_CUSTOM }}
+          git commit -m 'Update results.json' || echo "Nothing to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
