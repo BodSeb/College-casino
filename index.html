@@ -1,34 +1,144 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
-<title>Однорукий Бандит 🎰</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎰 College Casino</title>
 <style>
-body { font-family: sans-serif; text-align:center; margin-top:50px; }
-.slot { font-size:50px; margin: 20px; }
-button { font-size:20px; padding:10px 20px; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: radial-gradient(circle at top, #1a1a1a, #000);
+    color: #fff;
+    text-align: center;
+    overflow-x: hidden;
+  }
+  h1 {
+    font-size: 2.5em;
+    margin-top: 20px;
+    color: #ffd700;
+    text-shadow: 0 0 15px #ffb300;
+  }
+  .slot-container {
+    display: flex;
+    justify-content: center;
+    margin: 40px auto;
+  }
+  .slot {
+    width: 80px;
+    height: 80px;
+    background: #222;
+    margin: 0 10px;
+    border-radius: 10px;
+    font-size: 2.5em;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 15px #ffb300;
+  }
+  button {
+    background: linear-gradient(45deg, #ffb300, #ff6600);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 1.5em;
+    padding: 10px 30px;
+    cursor: pointer;
+    box-shadow: 0 0 10px #ffb300;
+    transition: 0.3s;
+  }
+  button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px #ffaa00;
+  }
+  .result {
+    font-size: 1.5em;
+    margin-top: 20px;
+  }
+  table {
+    margin: 40px auto;
+    border-collapse: collapse;
+    width: 80%;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+  }
+  th {
+    background: rgba(255, 204, 0, 0.3);
+  }
 </style>
 </head>
 <body>
-<h1>Однорукий Бандит 🎰</h1>
-<div class="slot" id="slot">🍒 🍋 🍊</div>
-<button onclick="spin()">Крутить</button>
-<p id="result"></p>
+
+<h1>🎰 College Casino</h1>
+<div class="slot-container">
+  <div class="slot" id="slot1">🍒</div>
+  <div class="slot" id="slot2">🍋</div>
+  <div class="slot" id="slot3">🍇</div>
+</div>
+<button id="spinBtn">SPIN</button>
+<div class="result" id="resultText"></div>
+
+<h2>🏆 Таблица победителей</h2>
+<table id="winnersTable">
+  <tr><th>Имя</th><th>Попытки</th><th>Победа</th></tr>
+</table>
+
 <script>
-const symbols = ["🍒","🍋","🍊","⭐"];
-function spin(){
-    let s1 = symbols[Math.floor(Math.random()*symbols.length)];
-    let s2 = symbols[Math.floor(Math.random()*symbols.length)];
-    let s3 = symbols[Math.floor(Math.random()*symbols.length)];
-    document.getElementById("slot").innerText = s1 + " " + s2 + " " + s3;
-    if (s1===s2 && s2===s3) {
-        let name = prompt("🎉 Вы выиграли! Введите имя:");
-        alert("Поздравляем, " + name + "! Результат записан.");
-        // Для ведения счёта можно потом добавить Google Sheets/Forms
+const symbols = ["🍒", "🍋", "🍇", "🍉", "⭐", "7️⃣"];
+let attempts = 0;
+
+document.getElementById("spinBtn").addEventListener("click", () => {
+  attempts++;
+  const slots = [1, 2, 3].map(i => document.getElementById("slot"+i));
+  let resultText = document.getElementById("resultText");
+
+  // Анимация
+  slots.forEach(slot => {
+    slot.style.transition = "transform 0.3s";
+    slot.style.transform = "rotateX(360deg)";
+  });
+
+  setTimeout(() => {
+    slots.forEach(slot => {
+      const symbol = symbols[Math.floor(Math.random() * symbols.length)];
+      slot.textContent = symbol;
+      slot.style.transform = "rotateX(0deg)";
+    });
+
+    const s1 = slots[0].textContent;
+    const s2 = slots[1].textContent;
+    const s3 = slots[2].textContent;
+
+    if (s1 === s2 && s2 === s3) {
+      resultText.innerHTML = "🎉 Победа! Все совпали!";
+      setTimeout(() => {
+        const name = prompt("Введите ваше имя:");
+        if (name) addWinner(name, attempts);
+      }, 500);
     } else {
-        document.getElementById("result").innerText = "Попробуй ещё!";
+      resultText.innerHTML = "😅 Не повезло, попробуй ещё!";
     }
+  }, 300);
+});
+
+function addWinner(name, tries) {
+  const table = document.getElementById("winnersTable");
+  const row = document.createElement("tr");
+  row.innerHTML = `<td>${name}</td><td>${tries}</td><td>✅</td>`;
+  table.appendChild(row);
+
+  // позже можно подключить Google Sheet:
+  // fetch('YOUR_GOOGLE_SCRIPT_URL', {
+  //   method: 'POST',
+  //   body: JSON.stringify({ name: name, tries: tries })
+  // });
 }
 </script>
+
 </body>
 </html>
