@@ -14,20 +14,22 @@ jobs:
         run: |
           echo "Updating results..."
           node -e "
-          const fs=require('fs');
-          const path='results.json';
-          const data=JSON.parse(fs.readFileSync(path,'utf8'));
-          const payload=JSON.parse(process.env.PAYLOAD);
+          const fs = require('fs');
+          const path = 'results.json';
+          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+          const payload = JSON.parse(process.env.PAYLOAD);
           data.push(payload);
-          fs.writeFileSync(path,JSON.stringify(data,null,2));
+          fs.writeFileSync(path, JSON.stringify(data, null, 2));
           "
         env:
           PAYLOAD: ${{ toJson(github.event.client_payload) }}
 
-      - name: Commit and push
+      - name: Commit and push changes
         run: |
           git config user.name 'GitHub Actions'
           git config user.email 'actions@github.com'
           git add results.json
           git commit -m 'Update results.json'
           git push
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN_CUSTOM }}
