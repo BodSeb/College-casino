@@ -106,11 +106,19 @@ async function spin() {
 
 async function sendResult(name, tries) {
   const result = { name, tries, date: new Date().toLocaleString() };
+  
+  // Отправляем только данные, токен Action использует сам
+  await fetch("/.netlify/functions/sendResult", { // пример, если используешь serverless
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(result)
+  }).catch(e => console.log("Отправка через repository_dispatch", e));
+
+  // Если хочешь напрямую через GitHub API:
   await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
     method: "POST",
     headers: {
       "Accept": "application/vnd.github+json",
-      "Authorization": "Bearer " + GITHUB_TOKEN_PLACEHOLDER,
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
@@ -118,8 +126,10 @@ async function sendResult(name, tries) {
       client_payload: result
     })
   });
+
   alert("Результат отправлен!");
 }
+
 loadResults();
 </script>
 
