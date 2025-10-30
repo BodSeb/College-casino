@@ -72,14 +72,14 @@
 <script>
 let tries = 0;
 const symbols = ["🍒","🍋","🍇","🍉","⭐","💎"];
+const sessionResults = []; // локальный кэш для таблицы
 
-async function loadResults() {
-  try {
-    const res = await fetch("results.json?cache=" + Date.now());
-    const data = await res.json();
-    const table = document.getElementById("results");
-    data.reverse().forEach(row => addToTable(row));
-  } catch(e) { console.error(e); }
+function addToTable(row) {
+  const table = document.getElementById("results");
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
+  table.insertBefore(tr, table.children[1]); // вставляем сверху
+  sessionResults.push(row); // сохраняем в локальный массив
 }
 
 async function spin() {
@@ -89,9 +89,9 @@ async function spin() {
 
   // Рандомное количество прокруток для каждого барабана
   const spins = [
-    5 + Math.floor(Math.random() * 10),  // r1: 5-14
-    8 + Math.floor(Math.random() * 12),  // r2: 8-19
-    10 + Math.floor(Math.random() * 15)  // r3: 10-24
+    5 + Math.floor(Math.random() * 10),
+    8 + Math.floor(Math.random() * 12),
+    10 + Math.floor(Math.random() * 15)
   ];
 
   let count = 0;
@@ -111,8 +111,8 @@ async function spin() {
   const a = r1.textContent, b = r2.textContent, c = r3.textContent;
   if(a === b && b === c) {
     const name = prompt("🎉 Победа! Введите ваше имя:");
-    document.getElementById("message").textContent = `Поздравляем, ${name}! 🍀`;
     const row = { name, tries, date: new Date().toLocaleString() };
+    document.getElementById("message").textContent = `Поздравляем, ${name}! 🍀`;
     addToTable(row);
     sendResult(row);
     tries = 0;
@@ -121,28 +121,23 @@ async function spin() {
   }
 }
 
-function addToTable(row) {
-  const table = document.getElementById("results");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
-  table.insertBefore(tr, table.children[1]); // вставляем сверху
-}
-
 async function sendResult(result) {
-  await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
-    method: "POST",
-    headers: {
-      "Accept": "application/vnd.github+json",
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      event_type: "update_results",
-      client_payload: result
-    })
-  });
+  try {
+    await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        event_type: "update_results",
+        client_payload: result
+      })
+    });
+  } catch(e) {
+    console.log("Не удалось отправить результат в GitHub:", e);
+  }
 }
-
-loadResults();
 </script>
 
 </body>
