@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Scoreboard</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;padding:16px}
+    table{border-collapse:collapse;width:100%;max-width:800px}
+    th,td{border:1px solid #ccc;padding:8px;text-align:left}
+    th{background:#f4f4f4}
+    #msg{margin-bottom:12px;color:#666}
+  </style>
+</head>
+<body>
+  <h1>Scoreboard</h1>
+  <div id="msg">Загрузка...</div>
+  <button id="refresh">Обновить</button>
+  <div id="table-wrap"></div>
+
+  <script>
+    async function loadResults() {
+      const msg = document.getElementById('msg');
+      const wrap = document.getElementById('table-wrap');
+      msg.textContent = 'Загрузка...';
+      wrap.innerHTML = '';
+      try {
+        // cache-busting: добавляем timestamp
+        const url = '/results.json?t=' + Date.now();
+        const res = await fetch(url, {cache: 'no-store'});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        if (!Array.isArray(data)) throw new Error('results.json не массив');
+        if (data.length === 0) {
+          msg.textContent = 'Нет записей';
+          return;
+        }
+        msg.textContent = 'Найдено ' + data.length + ' записей';
+        // Предполагаем, что объекты имеют поля name и score; если нет — адаптируй
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        thead.innerHTML = '<tr><th>#</th><th>Имя</th><th>Очки</th><th>Время</th></tr>';
+        table.appendChild(thead);
+        const tbody = document.createElement('tbody');
+        // сортировка по score по убыванию, если есть поле score
+        data.sort((a,b)=> (b.score||0)-(a.score||0));
+        data.forEach((item,i)=>{
+          const tr = document.createElement('tr');
+          const name = item.name ?? item.player ?? '';
+          const score = item.score ?? item.points ?? '';
+          const time = item.time ?? item.t ?? '';
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(name)}</td><td>${escapeHtml(score)}</td><td>${escapeHtml(time)}</td>`;
+          tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrap.appendChild(table);
+      } catch(e) {
+        msg.textContent = 'Ошибка: ' + (e && e.message || e);
+      }
+    }
+
+    document.getElementById('refresh').addEventListener('click', loadResults);
+
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    // Автозагрузка
+    loadResults();
+  </script>
+</body>
+</html>
