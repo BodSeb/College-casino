@@ -1,5 +1,4 @@
 name: Update results
-
 on:
   repository_dispatch:
     types: [update_results]
@@ -26,36 +25,29 @@ jobs:
         run: |
           node -e "
           const fs = require('fs');
-          const path = 'results.json';
+          const p = 'results.json';
           let data = [];
           try {
-            if (fs.existsSync(path)) {
-              const raw = fs.readFileSync(path, 'utf8');
-              data = JSON.parse(raw);
+            if (fs.existsSync(p)) {
+              const raw = fs.readFileSync(p,'utf8') || '';
+              data = raw ? JSON.parse(raw) : [];
               if (!Array.isArray(data)) {
-                console.warn('results.json exists but is not an array — replacing with empty array');
+                console.warn('results.json is not an array — replacing with empty array');
                 data = [];
               }
             }
-          } catch (e) {
-            console.warn('Error reading/parsing results.json, will replace with empty array:', e.message);
+          } catch(e) {
+            console.warn('Error reading/parsing results.json:', e && e.message);
             data = [];
           }
-
-          const payload = (() => {
-            try { return JSON.parse(process.env.PAYLOAD || '{}'); }
-            catch (e) { console.warn('Invalid PAYLOAD JSON:', e.message); return {}; }
-          })();
-
-          if (Object.keys(payload).length === 0) {
-            console.log('Empty payload — nothing to add.');
-            process.exit(0);
-          }
-
+          let payload = {};
+          try { payload = JSON.parse(process.env.PAYLOAD || '{}'); } catch(e) { console.warn('Invalid PAYLOAD JSON:', e && e.message); }
+          if (!payload || Object.keys(payload).length === 0) { console.log('Empty payload — nothing to add.'); process.exit(0); }
           data.push(payload);
-          fs.writeFileSync(path, JSON.stringify(data, null, 2));
-          console.log('Wrote', data.length, 'entries to', path);
+          fs.writeFileSync(p, JSON.stringify(data, null, 2), 'utf8');
+          console.log('Wrote', data.length, 'entries to', p);
           "
+
         env:
           PAYLOAD: ${{ toJson(github.event.client_payload) }}
 
