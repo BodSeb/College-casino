@@ -1,7 +1,11 @@
 name: Update results
+
 on:
   repository_dispatch:
     types: [update_results]
+
+permissions:
+  contents: write
 
 jobs:
   update:
@@ -9,17 +13,48 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          persist-credentials: true
+
+      - name: Show payload (debug)
+        run: |
+          echo "PAYLOAD: $PAYLOAD"
+        env:
+          PAYLOAD: ${{ toJson(github.event.client_payload) }}
 
       - name: Update results.json
         run: |
-          echo "Updating results..."
           node -e "
           const fs = require('fs');
           const path = 'results.json';
-          const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-          const payload = JSON.parse(process.env.PAYLOAD);
+          let data = [];
+          try {
+            if (fs.existsSync(path)) {
+              const raw = fs.readFileSync(path, 'utf8');
+              data = JSON.parse(raw);
+              if (!Array.isArray(data)) {
+                console.warn('results.json exists but is not an array — replacing with empty array');
+                data = [];
+              }
+            }
+          } catch (e) {
+            console.warn('Error reading/parsing results.json, will replace with empty array:', e.message);
+            data = [];
+          }
+
+          const payload = (() => {
+            try { return JSON.parse(process.env.PAYLOAD || '{}'); }
+            catch (e) { console.warn('Invalid PAYLOAD JSON:', e.message); return {}; }
+          })();
+
+          if (Object.keys(payload).length === 0) {
+            console.log('Empty payload — nothing to add.');
+            process.exit(0);
+          }
+
           data.push(payload);
           fs.writeFileSync(path, JSON.stringify(data, null, 2));
+          console.log('Wrote', data.length, 'entries to', path);
           "
         env:
           PAYLOAD: ${{ toJson(github.event.client_payload) }}
@@ -29,5 +64,5 @@ jobs:
           git config user.name 'GitHub Actions'
           git config user.email 'actions@github.com'
           git add results.json
-          git commit -m 'Update results.json' || echo "Nothing to commit"
-          git push "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" HEAD:main
+          git diff --staged --quiet || git commit -m 'Update results.json'
+          git push origin HEAD:main
