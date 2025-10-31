@@ -5,256 +5,152 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>🎰 College Casino</title>
   <style>
-    :root { --bg:#0b0b0b; --panel:#111; --accent:gold; --muted:#9aa0a6; }
-    html,body { height:100%; margin:0; }
     body {
-      font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: radial-gradient(circle at center, #121212 0%, #000 70%);
-      color: #fff;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:12px;
-      padding:20px;
-      box-sizing:border-box;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(circle at center, #222, #000);
+      color: white;
+      text-align: center;
+      overflow-x: hidden;
     }
-    h1 { color:var(--accent); text-shadow:0 0 10px rgba(255,165,0,0.3); margin:8px 0; }
+    h1 { color: gold; text-shadow: 0 0 10px orange; }
     .slot {
-      display:flex; gap:12px; justify-content:center; align-items:center; margin:8px 0;
+      display: flex; justify-content: center; margin: 20px;
     }
     .reel {
-      font-size:48px;
-      width:84px; height:84px;
-      border-radius:12px;
-      border:2px solid rgba(255,215,0,0.9);
-      display:flex; align-items:center; justify-content:center;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      box-shadow: 0 6px 18px rgba(0,0,0,0.6), inset 0 0 12px rgba(255,215,0,0.06);
-      user-select:none;
+      font-size: 50px;
+      margin: 10px;
+      width: 70px;
+      height: 70px;
+      border: 2px solid gold;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255,0.1);
+      box-shadow: 0 0 15px gold inset;
     }
-    .controls { display:flex; gap:12px; align-items:center; flex-direction:column; }
     button {
-      background:var(--accent); color:#111; border:none; border-radius:10px; padding:10px 18px;
-      font-size:18px; cursor:pointer; transition:transform .12s ease, box-shadow .12s;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+      background: gold;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: 0.3s;
     }
-    button:hover { transform:translateY(-3px); box-shadow:0 12px 24px rgba(0,0,0,0.6); }
-    #message { min-height:24px; color:#ffd; margin:6px 0; }
-    .panel {
-      width:100%; max-width:760px; background:var(--panel); border-radius:12px; padding:14px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.6);
-    }
+    button:hover { background: orange; transform: scale(1.05); }
     table {
-      width:100%; border-collapse:collapse; color:#fff; margin-top:12px; font-size:15px;
+      margin: 30px auto;
+      border-collapse: collapse;
+      width: 80%;
     }
-    th, td { padding:8px 10px; border-bottom:1px solid rgba(255,255,255,0.04); text-align:left; }
-    th { background:rgba(255,255,255,0.02); color:var(--muted); font-weight:600; }
-    tr:nth-child(even) td { background: rgba(255,255,255,0.01); }
-    .muted { color:var(--muted); font-size:13px; }
-    @media (max-width:480px) {
-      .reel { width:64px; height:64px; font-size:36px; }
-      button { font-size:16px; padding:8px 14px; }
+    th, td {
+      border: 1px solid #555;
+      padding: 8px;
     }
+    th { background: #333; }
+    tr:nth-child(even) { background: rgba(255,255,255,0.05); }
   </style>
 </head>
 <body>
 
-  <h1>🎰 College Casino</h1>
+<h1>🎰 College Casino 🎉</h1>
+<div class="slot">
+  <div class="reel" id="r1">🍒</div>
+  <div class="reel" id="r2">🍋</div>
+  <div class="reel" id="r3">🍇</div>
+</div>
 
-  <div class="panel" aria-live="polite" style="text-align:center;">
-    <div class="slot" aria-hidden="false">
-      <div class="reel" id="r1">🍒</div>
-      <div class="reel" id="r2">🍋</div>
-      <div class="reel" id="r3">🍇</div>
-    </div>
+<button onclick="spin()">Крутить 🎲</button>
 
-    <div class="controls">
-      <button id="spinBtn" type="button">Крутить 🎲</button>
-      <div id="message" class="muted"></div>
-    </div>
+<h2 id="message"></h2>
 
-    <hr style="margin:14px 0; border:none; border-top:1px solid rgba(255,255,255,0.03)">
-
-    <h3 style="margin:0 0 8px 0;">🏆 Таблица победителей</h3>
-    <div id="resultsPanel" style="overflow-x:auto">
-      <table id="results" aria-label="Таблица победителей">
-        <thead>
-          <tr><th>Имя</th><th>Попытки</th><th>Дата</th></tr>
-        </thead>
-        <tbody>
-          <!-- Заполняется динамически -->
-        </tbody>
-      </table>
-    </div>
-    <div class="muted" style="margin-top:8px">Результаты загружаются из <code>results.json</code> или используются встроенные демо-данные.</div>
-  </div>
+<h3>🏆 Таблица победителей</h3>
+<table id="results">
+  <thead>
+    <tr><th>Имя</th><th>Попытки</th><th>Дата</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
 <script>
-/* Полный клиентский код:
-   - Надёжно получает элементы через getElementById
-   - Загружает results.json (ожидается массив объектов {name, tries, date})
-   - При победе отправляет событие на GitHub Dispatch (требуется настроенный токен/Actions)
-   - Фолбэк: если results.json недоступен, показываются demoScores
-*/
+let tries = 0;
+const symbols = ["🍒","🍋","🍇","🍉","⭐","💎"];
 
-(() => {
-  // Элементы
-  const r1 = document.getElementById('r1');
-  const r2 = document.getElementById('r2');
-  const r3 = document.getElementById('r3');
-  const spinBtn = document.getElementById('spinBtn');
-  const messageEl = document.getElementById('message');
-  const resultsTbody = document.querySelector('#results tbody');
-
-  let tries = 0;
-  const symbols = ["🍒","🍋","🍇","🍉","⭐","💎"];
-  const SCORES_PATH = './results.json'; // поменяй путь при необходимости
-
-  // Демо-результаты (фолбэк)
-  const demoScores = [
-    { name: 'Alice', tries: 5, date: new Date().toLocaleString() },
-    { name: 'Bob', tries: 9, date: new Date().toLocaleString() }
-  ];
-
-  // Безопасный рендер таблицы
-  function renderResults(scores) {
-    resultsTbody.innerHTML = '';
-    if (!Array.isArray(scores) || scores.length === 0) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = '<td colspan="3" class="muted">Нет результатов</td>';
-      resultsTbody.appendChild(tr);
-      return;
-    }
-    // отображаем от последнего к первому (последние сверху)
-    for (let i = scores.length - 1; i >= 0; i--) {
-      const row = scores[i];
-      const tr = document.createElement('tr');
-      const name = escapeHtml(String(row.name ?? 'Player'));
-      const triesVal = escapeHtml(String(row.tries ?? row.attempts ?? 0));
-      const date = escapeHtml(String(row.date ?? '—'));
-      tr.innerHTML = `<td>${name}</td><td>${triesVal}</td><td>${date}</td>`;
-      resultsTbody.appendChild(tr);
-    }
+// Загружаем таблицу результатов
+async function loadResults() {
+  try {
+    const res = await fetch("results.json?cache=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const data = await res.json();
+    const tbody = document.querySelector("#results tbody");
+    tbody.innerHTML = "";
+    data.reverse().forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(e) {
+    console.error("Ошибка загрузки results.json:", e);
   }
+}
 
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  }
+// Крутилка
+async function spin() {
+  tries++;
+  const r1 = document.getElementById("r1");
+  const r2 = document.getElementById("r2");
+  const r3 = document.getElementById("r3");
+  const reels = [r1, r2, r3];
+  const spins = [10, 15, 20].map(s => s + Math.floor(Math.random()*5));
 
-  // Загружаем внешние результаты с фолбэком
-  async function loadResults() {
-    try {
-      const res = await fetch(SCORES_PATH + '?_=' + Date.now(), { cache: 'no-store' });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      const json = await res.json();
-      if (!Array.isArray(json)) throw new Error('Invalid JSON: expected array');
-      renderResults(json);
-    } catch (e) {
-      console.warn('[results] load failed, using demo', e);
-      renderResults(demoScores);
-    }
-  }
-
-  // sendResult: отправка на GitHub dispatch (требуется токен и Action)
-  async function sendResult(name, triesCount) {
-    // В продакшене токен не должен быть в клиентском коде.
-    // Настройте GitHub Actions + repository_dispatch через сервер или используйте proxied endpoint.
-    const payload = { name, tries: triesCount, date: new Date().toLocaleString() };
-
-    try {
-      // Плейсхолдер: замените GITHUB_TOKEN_PLACEHOLDER на защищённый токен на сервере
-      const token = 'GITHUB_TOKEN_PLACEHOLDER';
-      if (!token || token.includes('PLACEHOLDER')) {
-        // Клиентский alert вместо реальной отправки
-        console.info('[sendResult] token missing — skipping network dispatch', payload);
-        // Добавим результат локально в таблицу (для немедленного UX)
-        demoScores.push(payload);
-        renderResults(demoScores);
-        return;
+  for (let i = 0; i < Math.max(...spins); i++) {
+    reels.forEach((reel, idx) => {
+      if (i < spins[idx]) {
+        reel.textContent = symbols[Math.floor(Math.random()*symbols.length)];
       }
-
-      const resp = await fetch('https://api.github.com/repos/BodSeb/College-casino/dispatches', {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/vnd.github+json',
-          'Authorization': 'Bearer ' + token,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          event_type: 'update_results',
-          client_payload: payload
-        })
-      });
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      alert('Результат отправлен!');
-      // Можно обновить таблицу локально/подождать Action и затем перезагрузить results.json
-      demoScores.push(payload);
-      renderResults(demoScores);
-    } catch (err) {
-      console.error('[sendResult] failed', err);
-      alert('Не удалось отправить результат. Он добавлен локально.');
-      demoScores.push(payload);
-      renderResults(demoScores);
-    }
+    });
+    await new Promise(r => setTimeout(r, 100));
   }
 
-  // Spin logic
-  async function spin() {
-    tries++;
-    messageEl.textContent = '';
-
-    spinBtn.disabled = true;
-    spinBtn.style.opacity = '0.8';
-
-    const reels = [r1, r2, r3];
-    const baseDelays = [60, 80, 100];
-    const spinsCounts = [10 + Math.floor(Math.random()*6), 14 + Math.floor(Math.random()*6), 18 + Math.floor(Math.random()*8)];
-
-    const total = Math.max(...spinsCounts);
-    for (let i = 0; i < total; i++) {
-      for (let j = 0; j < reels.length; j++) {
-        if (i < spinsCounts[j]) {
-          reels[j].textContent = symbols[Math.floor(Math.random()*symbols.length)];
-        }
-      }
-      // progressive delay to make it feel like slowing down
-      await new Promise(r => setTimeout(r, baseDelays[Math.min(i, baseDelays.length-1)] + (i * 6)));
+  const [a, b, c] = reels.map(r => r.textContent);
+  if (a === b && b === c) {
+    const name = prompt("🎉 Победа! Введите ваше имя:");
+    if (name) {
+      document.getElementById("message").textContent = `Поздравляем, ${name}! 🍀`;
+      await sendResult(name, tries);
+      tries = 0;
     }
-
-    spinBtn.disabled = false;
-    spinBtn.style.opacity = '1';
-
-    const [a, b, c] = reels.map(r => r.textContent);
-    if (a === b && b === c) {
-      const name = prompt('🎉 Победа! Введите ваше имя:');
-      if (name && name.trim()) {
-        messageEl.textContent = `Поздравляем, ${name.trim()}! 🍀`;
-        await sendResult(name.trim(), tries);
-        tries = 0;
-      } else {
-        messageEl.textContent = 'Победа! Но имя не введено.';
-      }
-    } else {
-      messageEl.textContent = 'Попробуй ещё!';
-    }
+  } else {
+    document.getElementById("message").textContent = "Попробуй ещё!";
   }
+}
 
-  // Связываем события
-  spinBtn.addEventListener('click', spin);
-  // Быстрая клавиша пробел (если фокус не в input)
-  document.addEventListener('keydown', (e) => {
-    if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
-      e.preventDefault();
-      spinBtn.click();
-    }
-  });
+// Отправка результата в GitHub (repository_dispatch)
+async function sendResult(name, tries) {
+  const result = { name, tries, date: new Date().toLocaleString() };
+  try {
+    const resp = await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
+      method: "POST",
+      headers: {
+        "Accept": "application/vnd.github+json",
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        event_type: "update_results",
+        client_payload: result
+      })
+    });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    alert("Результат отправлен!");
+    loadResults();
+  } catch (e) {
+    console.error("Ошибка отправки:", e);
+    alert("Не удалось отправить результат");
+  }
+}
 
-  // Инициализация
-  loadResults();
-
-})();
+loadResults();
 </script>
 
 </body>
 </html>
-```[43dcd9a7-70db-4a1f-b0ae-981daa162054](https://github.com/1milligram/1loc/tree/74b3c14a1a1ab26029d650f157447302939409f1/collections%2Fstring%2Fescape-html-special-characters.md?citationMarker=43dcd9a7-70db-4a1f-b0ae-981daa162054&citationId=1 "github.com")
