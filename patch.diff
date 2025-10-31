@@ -1,0 +1,76 @@
+diff --git a/.github/workflows/update.yml b/.github/workflows/update.yml
+new file mode 100644
+index 0000000..abcdef1
+--- /dev/null
++++ b/.github/workflows/update.yml
+@@
++name: Update scoreboard
++
++on:
++  repository_dispatch:
++    types: [update_results]
++
++permissions:
++  contents: write
++
++jobs:
++  update:
++    runs-on: ubuntu-latest
++    steps:
++      - name: Checkout repository
++        uses: actions/checkout@v3
++
++      - name: Persist credentials
++        uses: webfactory/ssh-agent@v0.7.0
++
++      - name: Handle payload (debug)
++        run: |
++          echo "PAYLOAD: $PAYLOAD"
++        env:
++          PAYLOAD: ${{ toJson(github.event.client_payload) }}
++
++      - name: Process results.json
++        run: |
++          echo "::group::Process results.json"
++          node <<'EOF'
++          const fs = require('fs');
++          const db = 'results.json';
++          const PAYLOAD = JSON.parse(process.env.PAYLOAD || '{}');
++
++          let data = [];
++          try {
++            if (fs.existsSync(db)) {
++              const raw = fs.readFileSync(db, 'utf8');
++              data = JSON.parse(raw);
++              if (!Array.isArray(data)) {
++                console.warn('results.json is not an array — replacing with empty array');
++                data = [];
++              }
++            }
++          } catch (e) {
++            console.warn('Error reading/parsing results.json:', e.message);
++          }
++
++          if (Object.keys(PAYLOAD).length === 0) {
++            console.log('[empty payload — nothing to add]');
++            process.exit(0);
++          }
++
++          data.push(PAYLOAD);
++          fs.writeFileSync(db, JSON.stringify(data, null, 2));
++          console.log('Wrote', data.length, 'entries to', db);
++          EOF
++          echo "::endgroup::"
++        env:
++          PAYLOAD: ${{ toJson(github.event.client_payload) }}
++
++      - name: Commit and push changes
++        run: |
++          echo "::group::Commit and push changes"
++          git config user.name "GitHub Actions"
++          git config user.email "actions@github.com"
++          git add results.json scoreboard.html
++          git commit -m "Update scoreboard" || echo "No changes to commit"
++          git push || git fetch --all && git reset --hard origin/main
++          git push origin HEAD:main
++          echo "::endgroup::"
