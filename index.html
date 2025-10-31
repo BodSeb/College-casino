@@ -1,144 +1,100 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🎰 College Casino</title>
-<style>
-  body {
-    font-family: 'Segoe UI', sans-serif;
-    background: radial-gradient(circle at center, #222, #000);
-    color: white;
-    text-align: center;
-    overflow-x: hidden;
-  }
-  h1 { color: gold; text-shadow: 0 0 10px orange; }
-  .slot {
-    display: flex; justify-content: center; margin: 20px;
-  }
-  .reel {
-    font-size: 50px;
-    margin: 10px;
-    width: 70px;
-    height: 70px;
-    border: 2px solid gold;
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.1);
-    box-shadow: 0 0 15px gold inset;
-    transition: transform 0.2s ease;
-  }
-  button {
-    background: gold;
-    border: none;
-    border-radius: 10px;
-    padding: 10px 20px;
-    font-size: 18px;
-    cursor: pointer;
-    margin-top: 20px;
-  }
-  button:hover { background: orange; }
-  table {
-    margin: 30px auto;
-    border-collapse: collapse;
-    width: 80%;
-  }
-  th, td {
-    border: 1px solid #555;
-    padding: 8px;
-  }
-  th { background: #333; }
-  tr:nth-child(even) { background: rgba(255,255,255,0.05); }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>College Casino — Scoreboard</title>
+  <style>
+    /* Минимальное оформление для таблицы результатов */
+    #scoreboard { padding: 12px; border: 1px solid #ddd; background: #fff; max-width: 640px; margin: 16px auto; font-family: Arial, Helvetica, sans-serif; }
+    .scoreboard-table { width: 100%; border-collapse: collapse; }
+    .scoreboard-table th, .scoreboard-table td { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
+    .scoreboard-table thead th { background:#f7f7f7; font-weight:600; }
+    .score-empty, .score-error { color:#666; padding:8px; }
+    .score-loading { color:#444; padding:8px; }
+    .pos { width: 40px; }
+  </style>
 </head>
 <body>
+  <!-- Scoreboard container -->
+  <main>
+    <h1 style="text-align:center;font-family:inherit;">Scoreboard</h1>
+    <div id="scoreboard" aria-live="polite">Загрузка таблицы...</div>
+  </main>
 
-<h1>🎰 College Casino 🎉</h1>
-<div class="slot">
-  <div class="reel" id="r1">🍒</div>
-  <div class="reel" id="r2">🍋</div>
-  <div class="reel" id="r3">🍇</div>
-</div>
+  <!-- Универсальный скрипт: сначала пытается загрузить external ./scores.json,
+       при ошибке использует встроенные demoScores -->
+  <script>
+  (function () {
+    const PREFIX = '[scoreboard]';
+    const log = (...a) => console.log(PREFIX, ...a);
+    const error = (...a) => console.error(PREFIX, ...a);
 
-<button onclick="spin()">Крутить 🎲</button>
+    const container = document.getElementById('scoreboard');
+    if (!container) {
+      error('Container #scoreboard not found. Aborting.');
+      return;
+    }
 
-<h2 id="message"></h2>
+    // Встроенные тестовые данные — пригодятся если external scores.json отсутствует
+    const demoScores = [
+      { "name": "Alice", "score": 1250 },
+      { "name": "Bob", "score": 980 },
+      { "name": "Carol", "score": 760 }
+    ];
 
-<h3>🏆 Таблица победителей</h3>
-<table id="results">
-  <tr><th>Имя</th><th>Попытки</th><th>Дата</th></tr>
-</table>
+    // Попытаться загрузить внешний файл; если 404 или ошибка — использовать demoScores
+    const SCORES_PATH = './scores.json'; // при необходимости замените на абсолютный URL
 
-<script>
-let tries = 0;
-const symbols = ["🍒","🍋","🍇","🍉","⭐","💎"];
-const sessionResults = []; // локальный кэш для таблицы
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, c =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])
+      );
+    }
 
-function addToTable(row) {
-  const table = document.getElementById("results");
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${row.name}</td><td>${row.tries}</td><td>${row.date}</td>`;
-  table.insertBefore(tr, table.children[1]); // вставляем сверху
-  sessionResults.push(row); // сохраняем в локальный массив
-}
-
-async function spin() {
-  tries++;
-  const r = [r1, r2, r3];
-  document.getElementById("message").textContent = "Крутим...";
-
-  // Рандомное количество прокруток для каждого барабана
-  const spins = [
-    5 + Math.floor(Math.random() * 10),
-    8 + Math.floor(Math.random() * 12),
-    10 + Math.floor(Math.random() * 15)
-  ];
-
-  let count = 0;
-  const interval = setInterval(() => {
-    r.forEach((reel, i) => {
-      if(count < spins[i]) {
-        reel.textContent = symbols[Math.floor(Math.random()*symbols.length)];
-        reel.style.transform = `rotate(${Math.random()*10-5}deg)`;
+    function render(scores) {
+      if (!Array.isArray(scores) || scores.length === 0) {
+        container.innerHTML = '<div class="score-empty">Нет результатов</div>';
+        return;
       }
-    });
-    count++;
-    if(count > Math.max(...spins)) clearInterval(interval);
-  }, 50);
+      const rows = scores.map((s, i) => {
+        const name = escapeHtml(s.name ?? ('Player ' + (i + 1)));
+        const score = escapeHtml(s.score ?? 0);
+        return `<tr><td class="pos">${i + 1}</td><td class="name">${name}</td><td class="score">${score}</td></tr>`;
+      }).join('');
+      container.innerHTML = `
+        <table class="scoreboard-table" role="table" aria-label="Scoreboard">
+          <thead><tr><th>#</th><th>Имя</th><th>Очки</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>`;
+    }
 
-  await new Promise(res => setTimeout(res, Math.max(...spins)*50 + 50));
+    async function tryLoadExternal() {
+      container.innerHTML = '<div class="score-loading">Попытка загрузить внешний scores.json...</div>';
+      try {
+        const res = await fetch(SCORES_PATH, { cache: 'no-store' });
+        if (!res.ok) {
+          throw new Error('HTTP ' + res.status);
+        }
+        const json = await res.json();
+        if (!Array.isArray(json)) throw new Error('Expected array in external scores.json');
+        log('External scores loaded, count=', json.length);
+        render(json);
+      } catch (e) {
+        error('External load failed:', e);
+        log('Falling back to demoScores');
+        render(demoScores);
+      }
+    }
 
-  const a = r1.textContent, b = r2.textContent, c = r3.textContent;
-  if(a === b && b === c) {
-    const name = prompt("🎉 Победа! Введите ваше имя:");
-    const row = { name, tries, date: new Date().toLocaleString() };
-    document.getElementById("message").textContent = `Поздравляем, ${name}! 🍀`;
-    addToTable(row);
-    sendResult(row);
-    tries = 0;
-  } else {
-    document.getElementById("message").textContent = "Попробуй ещё!";
-  }
-}
-
-async function sendResult(result) {
-  try {
-    await fetch("https://api.github.com/repos/BodSeb/College-casino/dispatches", {
-      method: "POST",
-      headers: {
-        "Accept": "application/vnd.github+json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        event_type: "update_results",
-        client_payload: result
-      })
-    });
-  } catch(e) {
-    console.log("Не удалось отправить результат в GitHub:", e);
-  }
-}
-</script>
-
+    // Запуск после парсинга DOM
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', tryLoadExternal);
+    } else {
+      tryLoadExternal();
+    }
+  })();
+  </script>
 </body>
 </html>
+```[43dcd9a7-70db-4a1f-b0ae-981daa162054](https://github.com/1milligram/1loc/tree/74b3c14a1a1ab26029d650f157447302939409f1/collections%2Fstring%2Fescape-html-special-characters.md?citationMarker=43dcd9a7-70db-4a1f-b0ae-981daa162054&citationId=1 "github.com")
